@@ -5,8 +5,160 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Carigi Bot</title>
     <link href="{{ url_for('static', filename='/dist/output.css') }}" rel="stylesheet">
+    <script> 
+        $(document).ready(function() { 
+            $('#user-input').keypress(function(event) { 
+                if (event.keyCode === 13 && !event.shiftKey) { 
+                    event.preventDefault(); 
+                    $('form').submit(); 
+                } 
+            }); 
+
+            $('form').on('submit', function(event) { 
+                event.preventDefault(); 
+                var csrftoken = Cookies.get('csrftoken'); 
+                
+                $.ajaxSetup({ 
+                    headers: { 'X-CSRFToken': csrftoken } 
+                }); 
+
+                // Get the prompt
+                var prompt = $('#user-input').val();
+
+                // Replace \n with HTML line breaks in the prompt
+                var formattedPrompt = prompt.replace(/\n/g, '<br>');
+
+                var dateTime = new Date();
+                var time = dateTime.toLocaleTimeString();
+
+                // User response
+                $('#prompt').append('<div class="mb-2 text-right"><p class="bg-main text-white rounded-lg py-2 px-4 inline-block">'+prompt+'</p></div>');
+                // Clear the prompt 
+                $('#user-input').val(''); 
+
+                // Bot Response
+                $.ajax({ 
+                    url: '/index', 
+                    type: 'POST', 
+                    data: {prompt: prompt}, 
+                    dataType: 'json', 
+                    success: function(data) {
+                        // Replace \n with HTML line breaks
+                        var formattedResponse = data.response.replace(/\n/g, '<br>');
+
+                        // Bot response
+                        $('#prompt').append('<div class="mb-2"><p class="bg-gray-200 text-gray-700 rounded-lg py-2 px-4 inline-block">'+formattedResponse+'</p></div>');
+                        // Scroll to the bottom of the prompt
+                        $('#prompt').scrollTop($('#chat-box')[0].scrollHeight);
+                    }
+                }); 
+            }); 
+        });
+
+    </script> 
 </head>
 <body>
-    <h1 class="text-blue-300">Halo</h1>
-</body>
+    <!-- component -->
+    <div class="fixed bottom-0 right-0 mb-4 mr-4">
+        <button id="open-chat" class="bg-main text-white py-2 px-4 rounded-md hover:bg-teal-400 transition duration-300 flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+            </svg>
+            Carigi with AI
+        </button>
+    </div>
+    <div id="chat-container" class="hidden fixed bottom-16 right-4 w-96">
+        <div class="bg-white shadow-md rounded-lg max-w-lg w-full">
+            <div class="p-4 border-b bg-main text-white rounded-t-lg flex justify-between items-center">
+                <p class="text-lg font-semibold">Carigi Bot</p>
+                <button id="close-chat" class="text-gray-300 hover:text-gray-400 focus:outline-none focus:text-gray-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <div id="prompt" class="p-4 h-80 overflow-y-auto">
+                <!-- Chat messages will be displayed here -->
+                <div class="mb-2 text-right">
+                    <!-- <p class="bg-main text-white rounded-lg py-2 px-4 inline-block">hello</p> -->
+                </div>
+                <div class="mb-2">
+                    <p class="bg-gray-200 text-gray-700 rounded-lg py-2 px-4 inline-block">{{ introduction }}.</p>
+                </div>
+            </div>
+            <form action="" method="post" class="p-4 border-t flex">
+                <input id="user-input" type="text" placeholder="Type a message" class="w-full px-3 py-2 border rounded-l-md focus:outline-none focus:ring-2 focus:ring-main" name="prompt">
+                <button id="send-button" type="submit" class="bg-main text-white px-4 py-2 rounded-r-md hover:bg-teal-400 transition duration-300">Send</button>
+            </form>
+        </div>
+    </div>
+    <script>
+        const prompt = document.getElementById("prompt");
+        const chatContainer = document.getElementById("chat-container");
+        const userInput = document.getElementById("user-input");
+        const sendButton = document.getElementById("send-button");
+        const openChatButton = document.getElementById("open-chat");
+        const closeChatButton = document.getElementById("close-chat");
+
+        let isChatboxOpen = true; // Set the initial state to open
+
+        // Function to toggle the prompt visibility
+        function toggleChatbox() {
+            chatContainer.classList.toggle("hidden");
+            isChatboxOpen = !isChatboxOpen; // Toggle the state
+        }
+
+        // Add an event listener to the open chat button
+        openChatButton.addEventListener("click", toggleChatbox);
+
+        // Add an event listener to the close chat button
+        closeChatButton.addEventListener("click", toggleChatbox);
+
+        // Add an event listener to the send button
+        sendButton.addEventListener("click", function () {
+            const userMessage = userInput.value;
+            if (userMessage.trim() !== "") {
+                addUserMessage(userMessage);
+                respondToUser(userMessage);
+                userInput.value = "";
+            }
+        });
+
+        userInput.addEventListener("keyup", function (event) {
+            if (event.key === "Enter") {
+                const userMessage = userInput.value;
+                addUserMessage(userMessage);
+                respondToUser(userMessage);
+                userInput.value = "";
+            }
+        });
+
+        // function addUserMessage(message) {
+        //     const messageElement = document.createElement("div");
+        //     messageElement.classList.add("mb-2", "text-right");
+        //     messageElement.innerHTML = `<p class="bg-main text-white rounded-lg py-2 px-4 inline-block">${message}</p>`;
+        //     prompt.appendChild(messageElement);
+        //     prompt.scrollTop = prompt.scrollHeight;
+        // }
+
+        // function addBotMessage(message) {
+        //     const messageElement = document.createElement("div");
+        //     messageElement.classList.add("mb-2");
+        //     messageElement.innerHTML = `<p class="bg-gray-200 text-gray-700 rounded-lg py-2 px-4 inline-block">${message}</p>`;
+        //     prompt.appendChild(messageElement);
+        //     prompt.scrollTop = prompt.scrollHeight;
+        // }
+
+        // function respondToUser(userMessage) {
+        // // Replace this with your chatbot logic
+        //     setTimeout(() => {
+        //         addBotMessage("This is a response from the chatbot.");
+        //     }, 500);
+        // }
+
+        // Automatically open the prompt on page load
+        toggleChatbox();
+
+        </script>
+    </body>
 </html>

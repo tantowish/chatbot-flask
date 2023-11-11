@@ -31,11 +31,12 @@
 				var dateTime = new Date();
 				var time = dateTime.toLocaleTimeString();
 
-				// Add the formatted prompt to the response div
+				// User response
 				$('#response').append('<p id="GFG1">('+ time + ') <i class="bi bi-person"></i>: ' + formattedPrompt + '</p>');
 				$('#response #GFG1').css({"color": "green", "width": "90%", "float": "left"});
 				// Clear the prompt 
 				$('#prompt').val(''); 
+				// Bot Response
 				$.ajax({ 
 					url: '/', 
 					type: 'POST', 
