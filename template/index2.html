@@ -8,53 +8,81 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> 
 	<script src="https://cdn.jsdelivr.net/npm/js-cookie@3.0.0/dist/js.cookie.min.js"></script> 
     <script> 
-        $(document).ready(function() { 
+        $(document).ready(function(event) { 
+            // Tidak bisa submit by enter
+            $('#userForm').submit(function(event) {
+                event.preventDefault();
+                return false; 
+            });
 
+            // Deklarasi variabel
             const chatContainer = $("#chat-container");
             const nama = $("#name");
             const umur = $("#umur");
             const kelamin = $("#kelamin");
+
+            // close dan open chat toggle
             const openChatButton = $("#open-chat");
             const closeChatButton = $("#close-chat");
+            let isChatboxOpen = true; 
 
-            let isChatboxOpen = true; // Set the initial state to open
-
-            // Function to toggle the prompt visibility
-            // Function to toggle the prompt visibility
-            let data = ""
+            let responseCount = 0
+            let openChat = false
+            let userInfo
             function toggleChatbox(event) {
                 event.preventDefault(); 
                 if (nama.val().trim() !== "" && umur.val().trim() !== "" && kelamin.val() !== "pilih") {
                     chatContainer.toggleClass("hidden");
                     isChatboxOpen = !isChatboxOpen; // Toggle the state
-                    data = "Nama saya adalah " + nama.val().trim() + ", Saya berumur " + umur.val().trim() + " Tahun, dan Saya berjenis kelamin " + (kelamin.val() === "L" ? "Laki-laki" : "Perempuan");
-                    console.log(data)
+                    userInfo = "Nama saya adalah " + nama.val().trim() + ", Saya berumur " + umur.val().trim() + " Tahun, dan Saya berjenis kelamin " + (kelamin.val() === "L" ? "Laki-laki" : "Perempuan");
+                    // console.log(userInfo)
                 }
             }
 
-
-            // Add an event listener to the open chat button
             openChatButton.click(function(event){
                 toggleChatbox(event)
-                $.ajax({
-                    url: '/intro',
-                    type: 'POST',
-                    data: {data: data},
-                    dataType: 'json',
-                    success: function(data) {
-                        console.log(data.data);
-                        // Handle the summary data as needed
-                    },
-                    error: function(error) {
-                        console.error('Error summarizing:', error);
-                    }
-                });
+                if(!openChat){
+                    openChat = true
+                    $.ajax({
+                        url: '/intro',
+                        type: 'POST',
+                        data: {userInfo: userInfo},
+                        dataType: 'json',
+                        success: function(data) {
+                            console.log(data.data);
+                            // Handle the summary data as needed
+                        },
+                        error: function(error) {
+                            console.error('Error summarizing:', error);
+                        }
+                    });
+                }
             });
 
-            // Add an event listener to the close chat button
-            closeChatButton.click(toggleChatbox);
+            closeChatButton.click(function(event){
+                toggleChatbox(event)
+                if(responseCount!==0){
+                    $.ajax({
+                        url: '/summarize',
+                        type: 'POST',
+                        data:{
+                            nama: nama.val(),
+                            umur: umur.val(),
+                            jenis_kelamin: kelamin.val()
+                        },
+                        dataType: 'json',
+                        success: function(data) {
+                            console.log(data);
+                            // Handle the summary data as needed
+                        },
+                        error: function(error) {
+                            console.error('Error summarizing:', error);
+                        }
+                    });
+                }
+            });
 
-
+            // Menghindari submit ketika menekan shift
             $('#user-input').keypress(function(event) { 
                 if (event.keyCode === 13 && !event.shiftKey) { 
                     event.preventDefault(); 
@@ -62,6 +90,7 @@
                 } 
             });
 
+            // Mengirimkan prompt ke model
             $('#send-button').click(function (event) {
                 event.preventDefault(); 
                 var csrftoken = Cookies.get('csrftoken');
@@ -70,64 +99,49 @@
                     headers: { 'X-CSRFToken': csrftoken }
                 });
 
-                // Get the prompt
                 var prompt = $('#user-input').val().trim();
 
                 if (prompt.trim() !== "") {
-                    // Replace \n with HTML line breaks in the prompt
+                    // \n to break
                     var formattedPrompt = prompt.replace(/\n/g, '<br>');
-
-                    var dateTime = new Date();
-                    var time = dateTime.toLocaleTimeString();
+                    
 
                     // User response
                     $('#prompt').append('<div class="mb-2 text-right"><p class="bg-main text-sm text-white rounded-lg py-2 px-4 inline-block">' + prompt + '</p></div>');
-                    // Clear the prompt 
                     $('#user-input').val('');
-                    var prompt = $('#prompt');
-                    prompt.scrollTop(prompt.prop("scrollHeight"));
+
+                    responseCount++
+
+                    // Scroll kebawah chatarea
+                    var promptHeight = $('#prompt')
+                    promptHeight.scrollTop(promptHeight.prop("scrollHeight"));
 
                     // Bot Response
                     $.ajax({
                         url: '/',
                         type: 'POST',
-                        data: { prompt: prompt,
-                        data: data },
+                        data: { prompt: prompt },
                         dataType: 'json',
                         success: function (data) {
-                            // Replace \n with HTML line breaks
+                            // \n to break
                             var formattedResponse = data.response.replace(/\n/g, '<br>');
 
-                            // Bot response
+                            // bubble chat bot
                             $('#prompt').append('<div class="mb-2"><p class="bg-gray-200 text-sm text-gray-700 rounded-lg py-2 px-4 inline-block">' + formattedResponse + '</p></div>');
-                            // Scroll to the bottom of the prompt
-                            // $('#prompt').scrollTop($('#chat-box')[0].scrollHeight);
-                            var prompt = $('#prompt');
-                            prompt.scrollTop(prompt.prop("scrollHeight"));
+
+                            // Scroll kebawah chat area
+                            var promptHeight = $('#prompt')
+                            promptHeight.scrollTop(promptHeight.prop("scrollHeight"));
                         }
                     });
                 }
-            });
-            $('#appointment').click(function() {
-                event.preventDefault()
-                $.ajax({
-                    url: '/summarize',
-                    type: 'POST',
-                    success: function(data) {
-                        console.log(data.summary);
-                        // Handle the summary data as needed
-                    },
-                    error: function(error) {
-                        console.error('Error summarizing:', error);
-                    }
-                });
             });
         });
     </script> 
 </head>
 <body>
     <div class="max-w-lg mx-auto p-8 lg:py-16">
-        <form>
+        <form id="userForm">
             <div class="mb-6">
                 <label for="name" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Nama</label>
                 <input type="text" id="name" name="name" class="bg-gray-50 border border-main text-gray-900 text-sm rounded-lg block w-full p-2.5" required>
@@ -180,84 +194,5 @@
             </div>
         </form>
     </div>
-    
-
-    <script>
-        // // const prompt = document.getElementById("prompt");
-        // const chatContainer = document.getElementById("chat-container");
-        // // const userInput = document.getElementById("user-input");
-        // // const sendButton = document.getElementById("send-button");
-        // const openChatButton = document.getElementById("open-chat");
-        // const closeChatButton = document.getElementById("close-chat");
-
-        // let isChatboxOpen = true; // Set the initial state to open
-
-        // // Function to toggle the prompt visibility
-        // function toggleChatbox() {
-        //     const nama  = document.getElementById('nama')
-        //     const umur  = document.getElementById('umur')
-        //     const kelamin  = document.getElementById('kelamin')
-        //     if(nama.value.trim()!="" && umur.value.trim()!="" && kelamin.value != "pilih"){
-
-        //         chatContainer.classList.toggle("hidden");
-        //         isChatboxOpen = !isChatboxOpen; // Toggle the state
-        //     }
-        // }
-
-        // // Add an event listener to the open chat button
-        // openChatButton.addEventListener("click", toggleChatbox);
-
-        // // Add an event listener to the close chat button
-        // closeChatButton.addEventListener("click", toggleChatbox);
-
-        // // // Add an event listener to the send button
-        // sendButton.addEventListener("click", function () {
-        //     const userMessage = userInput.value.trim();  // Trim the input
-        //     if (userMessage !== "") {
-        //         addUserMessage(userMessage);
-        //         respondToUser(userMessage);
-        //         userInput.value = "";
-        //     }
-        // });
-
-        // userInput.addEventListener("keyup", function (event) {
-        //     if (event.key === "Enter") {
-        //         const userMessage = userInput.value.trim();  // Trim the input
-        //         if (userMessage !== "") {
-        //             console.log("Masuk enter")
-        //             addUserMessage(userMessage);
-        //             respondToUser(userMessage);
-        //             userInput.value = "";
-        //         }
-        //     }
-        // });
-
-        // function addUserMessage(message) {
-        //     const messageElement = document.createElement("div");
-        //     messageElement.classList.add("mb-2", "text-right");
-        //     messageElement.innerHTML = `<p class="bg-main text-white rounded-lg py-2 px-4 inline-block">${message}</p>`;
-        //     prompt.appendChild(messageElement);
-        //     prompt.scrollTop = prompt.scrollHeight;
-        // }
-
-        // function addBotMessage(message) {
-        //     const messageElement = document.createElement("div");
-        //     messageElement.classList.add("mb-2");
-        //     messageElement.innerHTML = `<p class="bg-gray-200 text-gray-700 rounded-lg py-2 px-4 inline-block">${message}</p>`;
-        //     prompt.appendChild(messageElement);
-        //     prompt.scrollTop = prompt.scrollHeight;
-        // }
-
-        // function respondToUser(userMessage) {
-        // // Replace this with your chatbot logic
-        //     setTimeout(() => {
-        //         addBotMessage("This is a response from the chatbot.");
-        //     }, 500);
-        // }
-
-        // Automatically open the prompt on page load
-        // toggleChatbox();
-
-        </script>
-    </body>
+</body>
 </html>
