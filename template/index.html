@@ -17,11 +17,11 @@
 			}); 
 			$('form').on('submit', function(event) { 
 				event.preventDefault(); 
-			var csrftoken = Cookies.get('csrftoken'); 
-			
-			$.ajaxSetup({ 
-				headers: { 'X-CSRFToken': csrftoken } 
-			}); 
+				var csrftoken = Cookies.get('csrftoken'); 
+				
+				$.ajaxSetup({ 
+					headers: { 'X-CSRFToken': csrftoken } 
+				}); 
 				// Get the prompt
 				var prompt = $('#prompt').val();
 

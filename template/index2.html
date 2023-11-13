@@ -5,133 +5,232 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Carigi Bot</title>
     <link href="{{ url_for('static', filename='/dist/output.css') }}" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> 
+	<script src="https://cdn.jsdelivr.net/npm/js-cookie@3.0.0/dist/js.cookie.min.js"></script> 
     <script> 
         $(document).ready(function() { 
+
+            const chatContainer = $("#chat-container");
+            const nama = $("#name");
+            const umur = $("#umur");
+            const kelamin = $("#kelamin");
+            const openChatButton = $("#open-chat");
+            const closeChatButton = $("#close-chat");
+
+            let isChatboxOpen = true; // Set the initial state to open
+
+            // Function to toggle the prompt visibility
+            // Function to toggle the prompt visibility
+            let data = ""
+            function toggleChatbox(event) {
+                event.preventDefault(); 
+                if (nama.val().trim() !== "" && umur.val().trim() !== "" && kelamin.val() !== "pilih") {
+                    chatContainer.toggleClass("hidden");
+                    isChatboxOpen = !isChatboxOpen; // Toggle the state
+                    data = "Nama saya adalah " + nama.val().trim() + ", Saya berumur " + umur.val().trim() + " Tahun, dan Saya berjenis kelamin " + (kelamin.val() === "L" ? "Laki-laki" : "Perempuan");
+                    console.log(data)
+                }
+            }
+
+
+            // Add an event listener to the open chat button
+            openChatButton.click(function(event){
+                toggleChatbox(event)
+                $.ajax({
+                    url: '/intro',
+                    type: 'POST',
+                    data: {data: data},
+                    dataType: 'json',
+                    success: function(data) {
+                        console.log(data.data);
+                        // Handle the summary data as needed
+                    },
+                    error: function(error) {
+                        console.error('Error summarizing:', error);
+                    }
+                });
+            });
+
+            // Add an event listener to the close chat button
+            closeChatButton.click(toggleChatbox);
+
+
             $('#user-input').keypress(function(event) { 
                 if (event.keyCode === 13 && !event.shiftKey) { 
                     event.preventDefault(); 
-                    $('form').submit(); 
+                    $('#send-button').click();
                 } 
-            }); 
+            });
 
-            $('form').on('submit', function(event) { 
+            $('#send-button').click(function (event) {
                 event.preventDefault(); 
-                var csrftoken = Cookies.get('csrftoken'); 
-                
-                $.ajaxSetup({ 
-                    headers: { 'X-CSRFToken': csrftoken } 
-                }); 
+                var csrftoken = Cookies.get('csrftoken');
+
+                $.ajaxSetup({
+                    headers: { 'X-CSRFToken': csrftoken }
+                });
 
                 // Get the prompt
-                var prompt = $('#user-input').val();
+                var prompt = $('#user-input').val().trim();
 
-                // Replace \n with HTML line breaks in the prompt
-                var formattedPrompt = prompt.replace(/\n/g, '<br>');
+                if (prompt.trim() !== "") {
+                    // Replace \n with HTML line breaks in the prompt
+                    var formattedPrompt = prompt.replace(/\n/g, '<br>');
 
-                var dateTime = new Date();
-                var time = dateTime.toLocaleTimeString();
+                    var dateTime = new Date();
+                    var time = dateTime.toLocaleTimeString();
 
-                // User response
-                $('#prompt').append('<div class="mb-2 text-right"><p class="bg-main text-white rounded-lg py-2 px-4 inline-block">'+prompt+'</p></div>');
-                // Clear the prompt 
-                $('#user-input').val(''); 
+                    // User response
+                    $('#prompt').append('<div class="mb-2 text-right"><p class="bg-main text-sm text-white rounded-lg py-2 px-4 inline-block">' + prompt + '</p></div>');
+                    // Clear the prompt 
+                    $('#user-input').val('');
+                    var prompt = $('#prompt');
+                    prompt.scrollTop(prompt.prop("scrollHeight"));
 
-                // Bot Response
-                $.ajax({ 
-                    url: '/index', 
-                    type: 'POST', 
-                    data: {prompt: prompt}, 
-                    dataType: 'json', 
+                    // Bot Response
+                    $.ajax({
+                        url: '/',
+                        type: 'POST',
+                        data: { prompt: prompt,
+                        data: data },
+                        dataType: 'json',
+                        success: function (data) {
+                            // Replace \n with HTML line breaks
+                            var formattedResponse = data.response.replace(/\n/g, '<br>');
+
+                            // Bot response
+                            $('#prompt').append('<div class="mb-2"><p class="bg-gray-200 text-sm text-gray-700 rounded-lg py-2 px-4 inline-block">' + formattedResponse + '</p></div>');
+                            // Scroll to the bottom of the prompt
+                            // $('#prompt').scrollTop($('#chat-box')[0].scrollHeight);
+                            var prompt = $('#prompt');
+                            prompt.scrollTop(prompt.prop("scrollHeight"));
+                        }
+                    });
+                }
+            });
+            $('#appointment').click(function() {
+                event.preventDefault()
+                $.ajax({
+                    url: '/summarize',
+                    type: 'POST',
                     success: function(data) {
-                        // Replace \n with HTML line breaks
-                        var formattedResponse = data.response.replace(/\n/g, '<br>');
-
-                        // Bot response
-                        $('#prompt').append('<div class="mb-2"><p class="bg-gray-200 text-gray-700 rounded-lg py-2 px-4 inline-block">'+formattedResponse+'</p></div>');
-                        // Scroll to the bottom of the prompt
-                        $('#prompt').scrollTop($('#chat-box')[0].scrollHeight);
+                        console.log(data.summary);
+                        // Handle the summary data as needed
+                    },
+                    error: function(error) {
+                        console.error('Error summarizing:', error);
                     }
-                }); 
-            }); 
+                });
+            });
         });
-
     </script> 
 </head>
 <body>
-    <!-- component -->
-    <div class="fixed bottom-0 right-0 mb-4 mr-4">
-        <button id="open-chat" class="bg-main text-white py-2 px-4 rounded-md hover:bg-teal-400 transition duration-300 flex items-center">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-            </svg>
-            Carigi with AI
-        </button>
-    </div>
-    <div id="chat-container" class="hidden fixed bottom-16 right-4 w-96">
-        <div class="bg-white shadow-md rounded-lg max-w-lg w-full">
-            <div class="p-4 border-b bg-main text-white rounded-t-lg flex justify-between items-center">
-                <p class="text-lg font-semibold">Carigi Bot</p>
-                <button id="close-chat" class="text-gray-300 hover:text-gray-400 focus:outline-none focus:text-gray-400">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                    </svg>
-                </button>
+    <div class="max-w-lg mx-auto p-8 lg:py-16">
+        <form>
+            <div class="mb-6">
+                <label for="name" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Nama</label>
+                <input type="text" id="name" name="name" class="bg-gray-50 border border-main text-gray-900 text-sm rounded-lg block w-full p-2.5" required>
             </div>
-            <div id="prompt" class="p-4 h-80 overflow-y-auto">
-                <!-- Chat messages will be displayed here -->
-                <div class="mb-2 text-right">
-                    <!-- <p class="bg-main text-white rounded-lg py-2 px-4 inline-block">hello</p> -->
+            <div class="mb-6">
+                <label for="umur" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Umur</label>
+                <input type="number" id="umur" name="umur" class="bg-gray-50 border border-main text-gray-900 text-sm rounded-lg block w-full p-2.5" required>
+            </div>
+            <div class="mb-10">
+                <label for="kelamin" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Jenis Kelamin</label>
+                <select id="kelamin" name="kelamin" class="bg-gray-50 border border-main text-gray-900 text-sm rounded-lg block w-full p-2.5">
+                    <option value="pilih">pilih</option>
+                    <option value="L">laki-laki</option>
+                    <option value="P">perempuan</option>
+                </select>
+            </div>
+            <div class="flex flex-wrap items-center justify-center">
+                <div class="mb-4 mr-4 flex flex-col items-center gap-2">
+                    <button type="button" id="open-chat" class="bg-main text-white py-2 px-4 rounded-md hover:bg-teal-400 transition duration-300 flex items-center">
+                        Konsultasi Kecerdasan Buatan
+                    </button>
+                    <p class="text-center">atau</p>
+                    <button type="submit" id="appointment" class="bg-main text-white py-2 px-4 rounded-md hover:bg-teal-400 transition duration-300 flex items-center">lanjutkan appointment</button>
                 </div>
-                <div class="mb-2">
-                    <p class="bg-gray-200 text-gray-700 rounded-lg py-2 px-4 inline-block">{{ introduction }}.</p>
+                <div id="chat-container" class="hidden -mt-96 lg:-mt-24 lg:fixed w-96 px-2">
+                    <div class="bg-white shadow-md rounded-lg max-w-lg w-full">
+                        <div class="p-4 border-b bg-main text-white rounded-t-lg flex justify-between items-center">
+                            <p class="text-lg font-semibold">Carigi Bot</p>
+                            <button id="close-chat" class="text-white hover:text-gray-100 focus:outline-none focus:text-gray-q00">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                            </button>
+                        </div>
+                        <div id="prompt" class="p-4 h-80 overflow-y-auto">
+                            <!-- Chat messages will be displayed here -->
+                            <div class="mb-2 text-right">
+                                <!-- <p class="bg-main text-white rounded-lg py-2 px-4 inline-block">hello</p> -->
+                            </div>
+                            <div class="mb-2">
+                                <p class="bg-gray-200 text-gray-700 text-sm rounded-lg py-2 px-4 inline-block">{{ introduction }}.</p>
+                            </div>
+                        </div>
+                        <form action="" method="post" class="p-4 border-t flex flex-nowrap mx-auto">
+                            <input id="user-input" type="text" placeholder="Type a message" class="w-3/4 px-3 py-2 border rounded-l-md focus:outline-none focus:ring-2 focus:ring-main" name="prompt" autocomplete="off">
+                            <button id="send-button" type="submit" class="w-1/5 bg-main text-white px-4 py-2 rounded-r-md hover:bg-teal-400 transition duration-300">Send</button>
+                        </form>                        
+                    </div>
                 </div>
             </div>
-            <form action="" method="post" class="p-4 border-t flex">
-                <input id="user-input" type="text" placeholder="Type a message" class="w-full px-3 py-2 border rounded-l-md focus:outline-none focus:ring-2 focus:ring-main" name="prompt">
-                <button id="send-button" type="submit" class="bg-main text-white px-4 py-2 rounded-r-md hover:bg-teal-400 transition duration-300">Send</button>
-            </form>
-        </div>
+        </form>
     </div>
+    
+
     <script>
-        const prompt = document.getElementById("prompt");
-        const chatContainer = document.getElementById("chat-container");
-        const userInput = document.getElementById("user-input");
-        const sendButton = document.getElementById("send-button");
-        const openChatButton = document.getElementById("open-chat");
-        const closeChatButton = document.getElementById("close-chat");
+        // // const prompt = document.getElementById("prompt");
+        // const chatContainer = document.getElementById("chat-container");
+        // // const userInput = document.getElementById("user-input");
+        // // const sendButton = document.getElementById("send-button");
+        // const openChatButton = document.getElementById("open-chat");
+        // const closeChatButton = document.getElementById("close-chat");
 
-        let isChatboxOpen = true; // Set the initial state to open
+        // let isChatboxOpen = true; // Set the initial state to open
 
-        // Function to toggle the prompt visibility
-        function toggleChatbox() {
-            chatContainer.classList.toggle("hidden");
-            isChatboxOpen = !isChatboxOpen; // Toggle the state
-        }
+        // // Function to toggle the prompt visibility
+        // function toggleChatbox() {
+        //     const nama  = document.getElementById('nama')
+        //     const umur  = document.getElementById('umur')
+        //     const kelamin  = document.getElementById('kelamin')
+        //     if(nama.value.trim()!="" && umur.value.trim()!="" && kelamin.value != "pilih"){
 
-        // Add an event listener to the open chat button
-        openChatButton.addEventListener("click", toggleChatbox);
+        //         chatContainer.classList.toggle("hidden");
+        //         isChatboxOpen = !isChatboxOpen; // Toggle the state
+        //     }
+        // }
 
-        // Add an event listener to the close chat button
-        closeChatButton.addEventListener("click", toggleChatbox);
+        // // Add an event listener to the open chat button
+        // openChatButton.addEventListener("click", toggleChatbox);
 
-        // Add an event listener to the send button
-        sendButton.addEventListener("click", function () {
-            const userMessage = userInput.value;
-            if (userMessage.trim() !== "") {
-                addUserMessage(userMessage);
-                respondToUser(userMessage);
-                userInput.value = "";
-            }
-        });
+        // // Add an event listener to the close chat button
+        // closeChatButton.addEventListener("click", toggleChatbox);
 
-        userInput.addEventListener("keyup", function (event) {
-            if (event.key === "Enter") {
-                const userMessage = userInput.value;
-                addUserMessage(userMessage);
-                respondToUser(userMessage);
-                userInput.value = "";
-            }
-        });
+        // // // Add an event listener to the send button
+        // sendButton.addEventListener("click", function () {
+        //     const userMessage = userInput.value.trim();  // Trim the input
+        //     if (userMessage !== "") {
+        //         addUserMessage(userMessage);
+        //         respondToUser(userMessage);
+        //         userInput.value = "";
+        //     }
+        // });
+
+        // userInput.addEventListener("keyup", function (event) {
+        //     if (event.key === "Enter") {
+        //         const userMessage = userInput.value.trim();  // Trim the input
+        //         if (userMessage !== "") {
+        //             console.log("Masuk enter")
+        //             addUserMessage(userMessage);
+        //             respondToUser(userMessage);
+        //             userInput.value = "";
+        //         }
+        //     }
+        // });
 
         // function addUserMessage(message) {
         //     const messageElement = document.createElement("div");
@@ -157,7 +256,7 @@
         // }
 
         // Automatically open the prompt on page load
-        toggleChatbox();
+        // toggleChatbox();
 
         </script>
     </body>
