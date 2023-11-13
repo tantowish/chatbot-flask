@@ -15,6 +15,8 @@ class chatbot_history(db.Model):
     nama = db.Column(db.String(50), nullable=False)
     umur = db.Column(db.Integer, nullable=False)
     jenis_kelamin = db.Column(Enum('P', 'L', name='jenis_kelamin_enum'), nullable=False)
+    icd_10 = db.Column(db.String(50), nullable=False)
+    icd_9 = db.Column(db.String(50), nullable=False)
     rangkuman = db.Column(db.Text, nullable=True)
 
 # Buat database dan tabel
@@ -92,12 +94,25 @@ def index():
 @app.route("/summarize", methods=['POST'])
 def summarize_route():
     messages = session.get('messages', [])
-    messages.append({"role": "user", "content": "Rangkum semua percakapan diatas, termasuk ICD 9, dan ICD 10"})
-    query = openai.chat.completions.create(
-        model="gpt-3.5-turbo-1106",
-        messages=messages
-    )
-    session['summary'] = query.choices[0].message.content
+    queries = [
+        'Rangkum semua percakapan diatas',
+        'Sebutkan saja diagnosis ICD 10 yang dilakukan, hanya sebutkan kode dan penamaan bahasa Inggrisnya, jika tidak ada katakan saja none',
+        'Sebutkan saja rekomendasi tindakan medis sesuai ICD 9 CM, hanya sebutkan kode, jika tidak ada katakan saja none'
+    ]
+    session['summary'] = []
+
+    for i in range(3):
+        messages.append({"role": "user", "content": queries[i]})
+        print(messages)
+        query = openai.chat.completions.create(
+            model="gpt-3.5-turbo-1106",
+            messages=messages
+        )
+        response = query.choices[0].message.content
+        messages.append({"role": "assistant", "content": response})
+
+        session['summary'].append(response)
+
 
 
     nama = request.form['nama']
@@ -108,7 +123,9 @@ def summarize_route():
         "nama": nama,
         "umur": umur,  
         "jenis_kelamin": jenis_kelamin, 
-        "rangkuman": session['summary']
+        "icd_10":session['summary'][1],
+        "icd_10":session['summary'][2],
+        "rangkuman": session['summary'][0]
     }
 
     new_user = chatbot_history(**history)
@@ -118,7 +135,7 @@ def summarize_route():
     # messages.append({"role": "assistant", "content": session['summary']})
     # session['messages'] = messages
 
-    return jsonify({'data': 'data', 'message': 'History Saved!'})
+    return jsonify({'message': 'History Saved!'})
     
 @app.route("/intro", methods=['POST'])
 def intro_route():
