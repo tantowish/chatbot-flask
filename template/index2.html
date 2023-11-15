@@ -31,37 +31,123 @@
             let userInfo
             function toggleChatbox(event) {
                 event.preventDefault(); 
-                if (nama.val().trim() !== "" && umur.val().trim() !== "" && kelamin.val() !== "pilih") {
+                // if (nama.val().trim() !== "" && umur.val().trim() !== "" && kelamin.val() !== "pilih") {
                     chatContainer.toggleClass("hidden");
                     isChatboxOpen = !isChatboxOpen; // Toggle the state
                     userInfo = "Nama saya adalah " + nama.val().trim() + ", Saya berumur " + umur.val().trim() + " Tahun, dan Saya berjenis kelamin " + (kelamin.val() === "L" ? "Laki-laki" : "Perempuan");
                     // console.log(userInfo)
-                }
+                // }
+            }
+
+            const chat = $('#chat')
+            const tm = $('#tm')
+            const header = $('#header')
+            const tmButton = $("#tm-menu")
+            tmButton.click(function(event){
+                event.preventDefault()
+                chat.toggleClass("hidden")
+                tm.toggleClass("hidden")
+                $('#icTM').toggleClass("hidden")
+                $('#icChat').toggleClass("hidden")
+            })
+
+            const gigiButton = $("#gigi");
+            const tmTemplate = $("#tm");
+            const gigiTemplate = $("#template-tampak");
+
+            let clicked
+            gigiButton.click(function (event) {
+                clicked = "/gigi"
+                event.preventDefault();
+
+                gigiTemplateShow()
+            });
+
+            const gusiButton = $("#gusi");
+            gusiButton.click(function (event) {
+                clicked = "/gusi"
+                event.preventDefault();
+
+                gigiTemplateShow()
+            });
+
+            const jllButton = $('#jll')
+            jllButton.click(function (event) {
+                clicked = "/jll"
+                event.preventDefault();
+
+                gigiTemplateShow()
+            });
+
+            function tampak(){
+                const tampakDepanBtn =$('#tampakDepan')
+                tampakDepanBtn.click(function(event){
+                    event.preventDefault();
+                    clicked+="/tampak_depan"
+                    console.log(clicked)
+                    uploadTemplateShow()
+                })
+                const tampakSampingBtn =$('#tampakSamping')
+                tampakSampingBtn.click(function(event){
+                    event.preventDefault();
+                    clicked+="/tampak_samping"
+                    console.log(clicked)
+                    uploadTemplateShow()
+                })
+                const tampakDalamBtn =$('#tampakDalam')
+                tampakDalamBtn.click(function(event){
+                    event.preventDefault();
+                    clicked+="/tampak_dalam"
+                    console.log(clicked)
+                    uploadTemplateShow()
+                })
+                const tampakAtasBtn =$('#tampakAtas')
+                tampakAtasBtn.click(function(event){
+                    event.preventDefault();
+                    clicked+="/tampak_atas"
+                    console.log(clicked)
+                    
+                })
+            }
+            
+            function gigiTemplateShow(){
+                tmTemplate.addClass("hidden");
+
+                const templateTampakContent = $("#template-tampak").html();
+                $('#chat-bg').append(templateTampakContent);
+                tampak()
+            }
+
+            function uploadTemplateShow(){
+                const tampak = $("#tampak");
+                tampak.addClass('hidden')
+                const uploadTemplateContent = $("#upload").html();
+                $('#chat-bg').append(uploadTemplateContent);
             }
 
             openChatButton.click(function(event){
                 toggleChatbox(event)
-                if(!openChat){
-                    openChat = true
-                    $.ajax({
-                        url: '/intro',
-                        type: 'POST',
-                        data: {userInfo: userInfo},
-                        dataType: 'json',
-                        success: function(data) {
-                            console.log(data.data);
-                            // Handle the summary data as needed
-                        },
-                        error: function(error) {
-                            console.error('Error summarizing:', error);
-                        }
-                    });
-                }
+                // if(!openChat){
+                //     openChat = true
+                //     $.ajax({
+                //         url: '/intro',
+                //         type: 'POST',
+                //         data: {userInfo: userInfo},
+                //         dataType: 'json',
+                //         success: function(data) {
+                //             console.log(data.data);
+                //             // Handle the summary data as needed
+                //         },
+                //         error: function(error) {
+                //             console.error('Error summarizing:', error);
+                //         }
+                //     });
+                // }
             });
 
             closeChatButton.click(function(event){
                 toggleChatbox(event)
-                if(responseCount!==0){
+                if(responseCount>5){
                     $.ajax({
                         url: '/summarize',
                         type: 'POST',
@@ -73,7 +159,6 @@
                         dataType: 'json',
                         success: function(data) {
                             console.log(data);
-                            // Handle the summary data as needed
                         },
                         error: function(error) {
                             console.error('Error summarizing:', error);
@@ -166,29 +251,48 @@
                     <p class="text-center">atau</p>
                     <button type="submit" id="appointment" class="bg-main text-white py-2 px-4 rounded-md hover:bg-teal-400 transition duration-300 flex items-center">lanjutkan appointment</button>
                 </div>
-                <div id="chat-container" class="hidden -mt-96 lg:-mt-24 lg:fixed w-96 px-2">
-                    <div class="bg-white shadow-md rounded-lg max-w-lg w-full">
+                <div id="chat-container" class=" -mt-96 lg:-mt-24 lg:fixed w-96 px-2">
+                    <div id="chat-bg" class="bg-white shadow-md rounded-lg max-w-lg w-full">
                         <div class="p-4 border-b bg-main text-white rounded-t-lg flex justify-between items-center">
-                            <p class="text-lg font-semibold">Carigi Bot</p>
-                            <button id="close-chat" class="text-white hover:text-gray-100 focus:outline-none focus:text-gray-q00">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                                </svg>
-                            </button>
-                        </div>
-                        <div id="prompt" class="p-4 h-80 overflow-y-auto">
-                            <!-- Chat messages will be displayed here -->
-                            <div class="mb-2 text-right">
-                                <!-- <p class="bg-main text-white rounded-lg py-2 px-4 inline-block">hello</p> -->
-                            </div>
-                            <div class="mb-2">
-                                <p class="bg-gray-200 text-gray-700 text-sm rounded-lg py-2 px-4 inline-block">{{ introduction }}.</p>
+                            <p class="text-lg font-semibold" id="header">Carigi Bot</p>
+                            <div class="flex flex-wrap items-center">
+                                <button id="tm-menu" class="mr-5">
+                                    <svg id="icTM" class="" viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="css-i6dzq1"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                                    <svg id="icChat" class="hidden" viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="css-i6dzq1"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+                                </button>
+                                <button id="close-chat" class="text-white hover:text-gray-100 focus:outline-none focus:text-gray-q00">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                    </svg>
+                                </button>
                             </div>
                         </div>
-                        <form action="" method="post" class="p-4 border-t flex flex-nowrap mx-auto">
-                            <input id="user-input" type="text" placeholder="Type a message" class="w-3/4 px-3 py-2 border rounded-l-md focus:outline-none focus:ring-2 focus:ring-main" name="prompt" autocomplete="off">
-                            <button id="send-button" type="submit" class="w-1/5 bg-main text-white px-4 py-2 rounded-r-md hover:bg-teal-400 transition duration-300">Send</button>
-                        </form>                        
+                        <div id="chat" class="hidden">
+                            <div id="prompt" class="p-4 h-80 overflow-y-auto">
+                                <div class="mb-2">
+                                    <p class="bg-gray-200 text-gray-700 text-sm rounded-lg py-2 px-4 inline-block">{{ introduction }}.</p>
+                                </div>
+                            </div>
+                            <form action="" method="post" class="p-4 border-t flex flex-nowrap mx-auto">
+                                <input id="user-input" type="text" placeholder="Type a message" class="w-3/4 px-3 py-2 border rounded-l-md focus:outline-none focus:ring-2 focus:ring-main" name="prompt" autocomplete="off">
+                                <button id="send-button" type="submit" class="w-1/5 bg-main text-white px-4 py-2 rounded-r-md hover:bg-teal-400 transition duration-300">Send</button>
+                            </form>  
+                        </div>    
+                        <div id="tm" class="">
+                            <div class="p-4 h-80 overflow-y-auto text-center">
+                                <h1 class="mb-8 mt-4">Pilih sesuai foto atau gambar</h1>
+                                <button id="gigi" class="p-2 bg-main text-white font-semibold w-2/3 rounded-lg mb-8">
+                                    Gigi
+                                </button>
+                                <button id="gusi" class="p-2 bg-main text-white font-semibold w-2/3 rounded-lg mb-8">
+                                    Gusi
+                                </button>
+                                <button id="jll" class="p-2 bg-main text-white font-semibold w-2/3 rounded-lg mb-8">
+                                    Jaringan Lunak Lainnya
+                                </button>
+                            </div>
+                            <div class="h-10"></div>
+                        </div>                 
                     </div>
                 </div>
             </div>
@@ -196,3 +300,29 @@
     </div>
 </body>
 </html>
+
+<template id="template-tampak">
+    <div id="tampak" class="p-4 h-[360px] overflow-y-auto text-center">
+        <h1 class="mb-4 mt-4">Pilih Tampak Foto</h1>
+        <button id="tampakDepan" class="p-2 bg-main text-white font-semibold w-2/3 rounded-lg mb-5">
+            Tampak Depan
+        </button>
+        <button id="tampakSamping" class="p-2 bg-main text-white font-semibold w-2/3 rounded-lg mb-5">
+            Tampak Samping
+        </button>
+        <button id="tampakDalam" class="p-2 bg-main text-white font-semibold w-2/3 rounded-lg mb-5">
+            Tampak Dalam
+        </button>
+        <button id="TampakAtas" class="p-2 bg-main text-white font-semibold w-2/3 rounded-lg mb-5">
+            Tampak Atas
+        </button>
+    </div>
+</template>
+
+<template id="upload">
+    <div class="p-4 h-[360px] overflow-y-auto text-center">
+        <h1>Upload Gambr</h1>
+        <input type="file" name="gambar" id="gambar">
+        <button id="button-clasify">Submit</button>
+    </div>
+</template>

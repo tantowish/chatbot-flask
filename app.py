@@ -6,6 +6,7 @@ from sqlalchemy import Enum
   
   
 app = Flask(__name__, template_folder='template', static_folder='static') 
+app.debug = True
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:@localhost/chatbot'
 db = SQLAlchemy(app)
@@ -15,46 +16,16 @@ class chatbot_history(db.Model):
     nama = db.Column(db.String(50), nullable=False)
     umur = db.Column(db.Integer, nullable=False)
     jenis_kelamin = db.Column(Enum('P', 'L', name='jenis_kelamin_enum'), nullable=False)
-    icd_10 = db.Column(db.String(50), nullable=False)
-    icd_9 = db.Column(db.String(50), nullable=False)
     rangkuman = db.Column(db.Text, nullable=True)
 
 # Buat database dan tabel
 with app.app_context():
     db.create_all()  
+
 # OpenAI API Key 
 openai.api_key = 'sk-API-key'
 app.secret_key = '123'
 
-# def introduce():
-#     g.messages = [
-#         {"role": "system", "content": "kamu adalah kecerdasan buatan yang memiliki pengetahuan luas dalam bidang komputer hardware dan bernama Toshka"},
-#         {"role": "user", "content": "Perkenalkan diri anda dengan singkat dan bagaimana cara anda membantu saya"}
-#     ]
-#     query = openai.chat.completions.create( 
-#         model="gpt-3.5-turbo-1106", 
-#         messages=g.messages
-#     ) 
-#     response = query.choices[0].message.content
-#     g.messages.append({"role": "assistant", "content":response})
-#     return response
-
-# def intro(data):
-#     messages = session.get('messages', [])
-#     messages.append(
-#         {"role": "user", "content": data})     
-#     return messages[1]['content']
-
-
-# def summarize():
-#     messages = session.get('messages', [])
-#     messages.append({"role": "user", "content": "Rangkum semua percakapan diatas tentang user, tidak perlu menjawab tentu, hanya rangkum saja seperti biasa"})
-#     query = openai.chat.completions.create(
-#         model="gpt-3.5-turbo-1106",
-#         messages=messages
-#     )
-#     session['summary'] = query.choices[0].message.content
-#     return session['summary']
 
 def get_completion(prompt):
     messages = session.get('messages', [])
@@ -82,7 +53,7 @@ def index():
     elif request.method == 'GET':
         introduction = "Halo, saya adalah AI yang memiliki pengetahuan tentang gigi dan mulut, silahkan tanya apapun terkait permasalahan anda"
         session['messages'] = [
-            {"role": "system", "content": "Kamu adalah kecerdasan buatan yang berperan dan Memiliki pengetahuan sebagai seorang dokter gigi yang berpengalaman dan berwawasan luas, berbahasa Indonesia namun juga mampu menggunakan bahasa lainnya, baik hati dan ramah, serta memberikan diagnosis sesuai dengan ICD 10 dan memberikan rekomendasi tindakan medis sesuai ICD 9 CM, selalu kaitkan komplikasi dari user ke ICD 10 dan rekomendasikan tindakan medis sesuai ICD 9 CM"}
+            {"role": "system", "content": "Kamu adalah kecerdasan buatan yang berperan dan Memiliki pengetahuan sebagai seorang dokter gigi yang berpengalaman dan berwawasan luas, berbahasa Indonesia namun juga mampu menggunakan bahasa lainnya, baik hati dan ramah\nSebagai kecerdasan buatan yang berperan sebagai dokter gigi, kamu harus mampu :\n1. Menjawab pertanyaan berkaitan dengan kesehatan gigi dan mulut\n2. Menerima keluhan penyakit gigi dan mulut, kemudian menegakkan diagnosa melalui anamnesa yang memuat setidaknya 5-10 pertanyaan yang ditanyakan secara bertahap satu per satu setelah user menjawab yang bertujuan untuk menguatkan kesimpulan diagnosa yang akan kamu berikan. Diagnosa yang kamu berikan haruslah berdasar pada file PPK Gigi yang diupload dalam instructions ini\n3. Pada akhir sesi chat dengan user kamu harus melakukan resume dari penyakit gigi dan mulut yang diderita user dengan format :\nA. Nama Penyakit\nB. No ICD 10\nC. Definisi\nD. Klasifikasi Terapi ICD 9 CM\n4. Merekomendasikan untuk mendaftarkan antrian di dokter gigi sesegera mungkin"}
         ]
 
         return render_template('index2.html', introduction=introduction)
@@ -94,24 +65,16 @@ def index():
 @app.route("/summarize", methods=['POST'])
 def summarize_route():
     messages = session.get('messages', [])
-    queries = [
-        'Rangkum semua percakapan diatas',
-        'Sebutkan saja diagnosis ICD 10 yang dilakukan, hanya sebutkan kode dan penamaan bahasa Inggrisnya, jika tidak ada katakan saja none',
-        'Sebutkan saja rekomendasi tindakan medis sesuai ICD 9 CM, hanya sebutkan kode, jika tidak ada katakan saja none'
-    ]
-    session['summary'] = []
+    messages.append({"role": "user", "content": 'Buat resume dari percakapan diatas, kamu harus melakukan resume dari penyakit gigi dan mulut yang diderita user dengan format :\nA. Nama Penyakit\nB. No ICD 10\nC. Definisi\nD. Klasifikasi Terapi ICD 9 CM'})
+    print(messages)
+    query = openai.chat.completions.create(
+        model="gpt-3.5-turbo-1106",
+        messages=messages
+    )
+    response = query.choices[0].message.content
+    messages.append({"role": "assistant", "content": response})
 
-    for i in range(3):
-        messages.append({"role": "user", "content": queries[i]})
-        print(messages)
-        query = openai.chat.completions.create(
-            model="gpt-3.5-turbo-1106",
-            messages=messages
-        )
-        response = query.choices[0].message.content
-        messages.append({"role": "assistant", "content": response})
-
-        session['summary'].append(response)
+    session['summary'] = response
 
 
 
@@ -123,9 +86,7 @@ def summarize_route():
         "nama": nama,
         "umur": umur,  
         "jenis_kelamin": jenis_kelamin, 
-        "icd_10":session['summary'][1],
-        "icd_10":session['summary'][2],
-        "rangkuman": session['summary'][0]
+        "rangkuman": session['summary']
     }
 
     new_user = chatbot_history(**history)
