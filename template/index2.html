@@ -106,7 +106,7 @@
                     event.preventDefault();
                     clicked+="/tampak_atas"
                     console.log(clicked)
-                    
+                    uploadTemplateShow()
                 })
             }
             
@@ -123,7 +123,52 @@
                 tampak.addClass('hidden')
                 const uploadTemplateContent = $("#upload").html();
                 $('#chat-bg').append(uploadTemplateContent);
+                classifyClick()
             }
+
+            function classifyClick(){
+                $('#button-classify').click(function(event){
+                    console.log('clicked')
+                    event.preventDefault();
+                    var fileInput = $('#gambar')[0];
+                    var file = fileInput.files[0];
+                    
+                    if (file) {
+                        console.log('masuk file')
+                        // Create a FormData object to send the file data
+                        var formData = new FormData();
+                        formData.append('gambar', file);
+                        formData.append('clicked', clicked);
+
+                        $('#container-upload').toggleClass('hidden')
+                        $('#waiting').toggleClass('hidden')
+                        
+                        $.ajax({
+                            type: 'POST',
+                            url: '/classify', // Change this to your actual endpoint
+                            data: formData,
+                            contentType: false,
+                            processData: false,
+                            success: function (response) {
+                                // Handle the success response
+                                console.log('File uploaded and classified:', response.classification);
+                                $('#text').text(response.classification);
+                            },
+                            error: function (error) {
+                                // Handle the error response
+                                console.error('Error uploading file:', error);
+                            }
+                        });
+                    } else {
+                        alert('Please select a file before submitting.');
+                    }
+                });
+            }
+
+           
+
+
+
 
             openChatButton.click(function(event){
                 toggleChatbox(event)
@@ -175,7 +220,7 @@
                 } 
             });
 
-            // Mengirimkan prompt ke model
+
             $('#send-button').click(function (event) {
                 event.preventDefault(); 
                 var csrftoken = Cookies.get('csrftoken');
@@ -303,7 +348,7 @@
 
 <template id="template-tampak">
     <div id="tampak" class="p-4 h-[360px] overflow-y-auto text-center">
-        <h1 class="mb-4 mt-4">Pilih Tampak Foto</h1>
+        <h1 class="mb-4 mt-4 font-semibold">Pilih Tampak Foto</h1>
         <button id="tampakDepan" class="p-2 bg-main text-white font-semibold w-2/3 rounded-lg mb-5">
             Tampak Depan
         </button>
@@ -321,8 +366,15 @@
 
 <template id="upload">
     <div class="p-4 h-[360px] overflow-y-auto text-center">
-        <h1>Upload Gambr</h1>
-        <input type="file" name="gambar" id="gambar">
-        <button id="button-clasify">Submit</button>
+        <div id="container-upload" class="pb-8">
+            <h1 class="mb-16 mt-4 font-semibold">Upload Gambar</h1>
+            <input class="mb-12" type="file" name="gambar" id="gambar">
+            <button class="p-2 bg-main text-white font-semibold w-2/3 rounded-lg mb-5" id="button-classify">Submit</button>
+        </div>
+        <div id="waiting" class="hidden">
+            <div class="flex flex-wrap mt-32 px-4 justify-center">
+                <p id="text" class="font-semibold">Menunggu Klasifikasi</p>
+            </div>
+        </div>
     </div>
 </template>

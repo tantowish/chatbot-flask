@@ -1,14 +1,14 @@
 from flask import Flask, render_template, request, jsonify, session
-import openai
+import openai, os, model
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import Enum
-
   
   
 app = Flask(__name__, template_folder='template', static_folder='static') 
 app.debug = True
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:@localhost/chatbot'
+app.config['UPLOAD_FOLDER'] = 'static/img'
 db = SQLAlchemy(app)
 
 class chatbot_history(db.Model):
@@ -111,7 +111,32 @@ def intro_route():
     session['messages'] = messages
  
     return jsonify({'data': messages[1]})
+
+@app.route("/classify", methods=['POST'])
+def classify_route():
+    if 'gambar' in request.files:
+        file = request.files['gambar']
+        path = request.form.get('clicked', None)
+        if file.filename != '':
+            # Save the file to the specified upload folder
+            print(file)
+            file_path = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
+            print("File path:", file_path)
+
+            # Check if the directory exists
+            if not os.path.exists(app.config['UPLOAD_FOLDER']):
+                os.makedirs(app.config['UPLOAD_FOLDER'])            
+            print(file_path)
+            file.save(file_path)
+
+            classification = model.classify(path, file_path)
+
+            # Perform classification or any other processing here
+            # ...
+
+            return jsonify({'classification': classification})
     
+    return 'No file uploaded or invalid file.'
 
 if __name__ == "__main__":
     app.run(debug=True)

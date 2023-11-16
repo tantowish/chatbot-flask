@@ -2,12 +2,12 @@ from keras.models import load_model  # TensorFlow is required for Keras to work
 from PIL import Image, ImageOps  # Install pillow instead of PIL
 import numpy as np
 
-def clasify():
+def classify(path, imagePath):
     # Disable scientific notation for clarity
     np.set_printoptions(suppress=True)
 
     # Load the model
-    model = load_model("./static/model/gigi/gigi_depan.h5", compile=False)
+    model = load_model("./static/model"+path+".h5", compile=False)
 
     # Load the labels
     class_names = open("./static/model/gigi/labels.txt", "r").readlines()
@@ -18,7 +18,7 @@ def clasify():
     data = np.ndarray(shape=(1, 224, 224, 3), dtype=np.float32)
 
     # Replace this with the path to your image
-    image = Image.open("karies-1.jpg").convert("RGB")
+    image = Image.open(imagePath).convert("RGB")
 
     # resizing the image to be at least 224x224 and then cropping from the center
     size = (224, 224)
@@ -42,4 +42,4 @@ def clasify():
     # Print prediction and confidence score
     return class_name[2:]
 
-print(clasify())
+# print(classify())
