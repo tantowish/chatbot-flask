@@ -24,7 +24,7 @@ with app.app_context():
     db.create_all()  
 
 # OpenAI API Key 
-openai.api_key = 'sk-API-key
+openai.api_key = 'sk-API-key'
 app.secret_key = '123'
 
 
