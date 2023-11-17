@@ -7,7 +7,7 @@ from sqlalchemy import Enum
 app = Flask(__name__, template_folder='template', static_folder='static') 
 app.debug = True
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://digman-dev:ROgoRDIX#/Z./t`U@34.101.103.116/chatbot_db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'Database'
 app.config['UPLOAD_FOLDER'] = 'static/img'
 db = SQLAlchemy(app)
 
