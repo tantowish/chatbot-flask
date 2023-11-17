@@ -7,7 +7,7 @@ from sqlalchemy import Enum
 app = Flask(__name__, template_folder='template', static_folder='static') 
 app.debug = True
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://digman-dev:ROgoRDIX#/Z./t`U@34.101.103.116/chatbot_db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'db'
 app.config['UPLOAD_FOLDER'] = 'static/img'
 db = SQLAlchemy(app)
 
@@ -24,7 +24,7 @@ with app.app_context():
     db.create_all()  
 
 # OpenAI API Key 
-openai.api_key = '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'
+openai.api_key = 'sk-API-Key'
 app.secret_key = '123'
 
 def get_completion(prompt):
@@ -139,7 +139,6 @@ def classify_route():
             classification = model.classify(path, file_path)
 
             # Perform classification or any other processing here
-            # ...
             session['classification'] = classification
 
             return jsonify({'classification': classification})

@@ -7,10 +7,10 @@ def classify(path, imagePath):
     np.set_printoptions(suppress=True)
 
     # Load the model
-    model = load_model("./static/model"+path+".h5", compile=False)
+    model = load_model("./static/asset/model"+path+"/model.h5", compile=False)
 
     # Load the labels
-    class_names = open("./static/model/gigi/labels.txt", "r").readlines()
+    class_names = open("./static/asset/model"+path+"/labels.txt", "r").readlines()
 
     # Create the array of the right shape to feed into the keras model
     # The 'length' or number of images you can put into the array is
