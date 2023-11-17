@@ -31,18 +31,23 @@
             let userInfo
             function toggleChatbox(event) {
                 event.preventDefault(); 
-                // if (nama.val().trim() !== "" && umur.val().trim() !== "" && kelamin.val() !== "pilih") {
+                if (nama.val().trim() !== "" && umur.val().trim() !== "" && kelamin.val() !== "pilih") {
                     chatContainer.toggleClass("hidden");
                     isChatboxOpen = !isChatboxOpen; // Toggle the state
                     userInfo = "Nama saya adalah " + nama.val().trim() + ", Saya berumur " + umur.val().trim() + " Tahun, dan Saya berjenis kelamin " + (kelamin.val() === "L" ? "Laki-laki" : "Perempuan");
-                    // console.log(userInfo)
-                // }
+                    console.log(userInfo)
+                    return true
+                }
+                else{
+                    return false
+                }
             }
 
             const chat = $('#chat')
             const tm = $('#tm')
             const header = $('#header')
             const tmButton = $("#tm-menu")
+
             tmButton.click(function(event){
                 event.preventDefault()
                 chat.toggleClass("hidden")
@@ -165,29 +170,26 @@
                 });
             }
 
-           
-
-
-
+        
 
             openChatButton.click(function(event){
-                toggleChatbox(event)
-                // if(!openChat){
-                //     openChat = true
-                //     $.ajax({
-                //         url: '/intro',
-                //         type: 'POST',
-                //         data: {userInfo: userInfo},
-                //         dataType: 'json',
-                //         success: function(data) {
-                //             console.log(data.data);
-                //             // Handle the summary data as needed
-                //         },
-                //         error: function(error) {
-                //             console.error('Error summarizing:', error);
-                //         }
-                //     });
-                // }
+                let isInput = toggleChatbox(event)
+                if(!openChat && isInput){
+                    openChat = true
+                    $.ajax({
+                        url: '/intro',
+                        type: 'POST',
+                        data: {userInfo: userInfo},
+                        dataType: 'json',
+                        success: function(data) {
+                            console.log(data.data);
+                            // Handle the summary data as needed
+                        },
+                        error: function(error) {
+                            console.error('Error summarizing:', error);
+                        }
+                    });
+                }
             });
 
             closeChatButton.click(function(event){
@@ -296,7 +298,7 @@
                     <p class="text-center">atau</p>
                     <button type="submit" id="appointment" class="bg-main text-white py-2 px-4 rounded-md hover:bg-teal-400 transition duration-300 flex items-center">lanjutkan appointment</button>
                 </div>
-                <div id="chat-container" class=" -mt-96 lg:-mt-24 lg:fixed w-96 px-2">
+                <div id="chat-container" class="hidden -mt-96 lg:-mt-24 lg:fixed w-96 px-2">
                     <div id="chat-bg" class="bg-white shadow-md rounded-lg max-w-lg w-full">
                         <div class="p-4 border-b bg-main text-white rounded-t-lg flex justify-between items-center">
                             <p class="text-lg font-semibold" id="header">Carigi Bot</p>
@@ -312,7 +314,7 @@
                                 </button>
                             </div>
                         </div>
-                        <div id="chat" class="hidden">
+                        <div id="chat" class="">
                             <div id="prompt" class="p-4 h-80 overflow-y-auto">
                                 <div class="mb-2">
                                     <p class="bg-gray-200 text-gray-700 text-sm rounded-lg py-2 px-4 inline-block">{{ introduction }}.</p>
@@ -323,7 +325,7 @@
                                 <button id="send-button" type="submit" class="w-1/5 bg-main text-white px-4 py-2 rounded-r-md hover:bg-teal-400 transition duration-300">Send</button>
                             </form>  
                         </div>    
-                        <div id="tm" class="">
+                        <div id="tm" class="hidden">
                             <div class="p-4 h-80 overflow-y-auto text-center">
                                 <h1 class="mb-8 mt-4">Pilih sesuai foto atau gambar</h1>
                                 <button id="gigi" class="p-2 bg-main text-white font-semibold w-2/3 rounded-lg mb-8">

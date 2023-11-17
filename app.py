@@ -7,7 +7,7 @@ from sqlalchemy import Enum
 app = Flask(__name__, template_folder='template', static_folder='static') 
 app.debug = True
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:@localhost/chatbot'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://digman-dev:ROgoRDIX#/Z./t`U@34.101.103.116/chatbot_db'
 app.config['UPLOAD_FOLDER'] = 'static/img'
 db = SQLAlchemy(app)
 
@@ -17,13 +17,14 @@ class chatbot_history(db.Model):
     umur = db.Column(db.Integer, nullable=False)
     jenis_kelamin = db.Column(Enum('P', 'L', name='jenis_kelamin_enum'), nullable=False)
     rangkuman = db.Column(db.Text, nullable=True)
+    classification = db.Column(db.String(100), nullable=True)
 
 # Buat database dan tabel
 with app.app_context():
     db.create_all()  
 
 # OpenAI API Key 
-openai.api_key = 'sk-API-key'
+openai.api_key = 'sk-API-key
 app.secret_key = '123'
 
 
@@ -65,6 +66,11 @@ def index():
 @app.route("/summarize", methods=['POST'])
 def summarize_route():
     messages = session.get('messages', [])
+    classification = session.get('classification')
+    if(classification):
+        classification = session['classification']
+    else:
+        classification = None
     messages.append({"role": "user", "content": 'Buat resume dari percakapan diatas, kamu harus melakukan resume dari penyakit gigi dan mulut yang diderita user dengan format :\nA. Nama Penyakit\nB. No ICD 10\nC. Definisi\nD. Klasifikasi Terapi ICD 9 CM'})
     print(messages)
     query = openai.chat.completions.create(
@@ -86,7 +92,8 @@ def summarize_route():
         "nama": nama,
         "umur": umur,  
         "jenis_kelamin": jenis_kelamin, 
-        "rangkuman": session['summary']
+        "rangkuman": session['summary'],
+        "classification":classification
     }
 
     new_user = chatbot_history(**history)
@@ -100,8 +107,8 @@ def summarize_route():
     
 @app.route("/intro", methods=['POST'])
 def intro_route():
-    data = request.form['userInfo']
     messages = session.get('messages', [])
+    data = request.form['userInfo']
     messages.append({"role": "user", "content": data})
     query = openai.chat.completions.create(
         model="gpt-3.5-turbo-1106",
@@ -114,6 +121,7 @@ def intro_route():
 
 @app.route("/classify", methods=['POST'])
 def classify_route():
+    classification = session.get('classification')
     if 'gambar' in request.files:
         file = request.files['gambar']
         path = request.form.get('clicked', None)
@@ -133,6 +141,7 @@ def classify_route():
 
             # Perform classification or any other processing here
             # ...
+            session['classification'] = classification
 
             return jsonify({'classification': classification})
     
