@@ -302,10 +302,10 @@
 
                     setTimeout(function () {
                         $('#prompt').append('<div id="chat-wait" class="mb-2"><p class="bg-gray-200 text-sm text-gray-700 rounded-lg py-2 px-4 inline-block">...</p></div>');                    
+                        var promptHeight = $('#prompt')
+                        promptHeight.scrollTop(promptHeight.prop("scrollHeight"));
                     }, 600);
                     // Scroll kebawah chat area
-                    var promptHeight = $('#prompt')
-                    promptHeight.scrollTop(promptHeight.prop("scrollHeight"));
                     // Bot Response
                     $.ajax({
                         url: '/',
