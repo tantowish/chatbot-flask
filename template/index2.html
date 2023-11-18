@@ -33,6 +33,7 @@
             function toggleChatbox(event) {
                 event.preventDefault(); 
                 if (nama.val().trim() !== "" && umur.val().trim() !== "" && kelamin.val() !== "pilih") {
+                    $('#error').addClass('hidden')
                     chatContainer.toggleClass("hidden");
                     ic3D.toggleClass("hidden");
                     isChatboxOpen = !isChatboxOpen; // Toggle the state
@@ -41,6 +42,7 @@
                     return true
                 }
                 else{
+                    $('#error').removeClass('hidden')
                     return false
                 }
             }
@@ -65,9 +67,9 @@
                     event.preventDefault()
                     chat.toggleClass("hidden")
                     tm.toggleClass("hidden")
-                    $('#icTM').toggleClass("hidden")
-                    $('#icChat').toggleClass("hidden")
                 }
+                $('#icTM').toggleClass("hidden")
+                $('#icChat').toggleClass("hidden")
             })
 
             const gigiButton = $("#gigi");
@@ -176,44 +178,44 @@
                 }
             }
 
-            function classifyClick(){
-                $('#button-classify').click(function(event){
-                    console.log('clicked')
-                    event.preventDefault();
-                    var fileInput = $('#gambar')[0];
-                    var file = fileInput.files[0];
+            // function classifyClick(){
+            //     $('#button-classify').click(function(event){
+            //         console.log('clicked')
+            //         event.preventDefault();
+            //         var fileInput = $('#gambar')[0];
+            //         var file = fileInput.files[0];
                     
-                    if (file) {
-                        console.log('masuk file')
-                        // Create a FormData object to send the file data
-                        var formData = new FormData();
-                        formData.append('gambar', file);
-                        formData.append('clicked', clicked);
+            //         if (file) {
+            //             console.log('masuk file')
+            //             // Create a FormData object to send the file data
+            //             var formData = new FormData();
+            //             formData.append('gambar', file);
+            //             formData.append('clicked', clicked);
 
-                        $('#container-upload').toggleClass('hidden')
-                        $('#waiting').toggleClass('hidden')
+            //             $('#container-upload').toggleClass('hidden')
+            //             $('#waiting').toggleClass('hidden')
                         
-                        $.ajax({
-                            type: 'POST',
-                            url: '/classify', // Change this to your actual endpoint
-                            data: formData,
-                            contentType: false,
-                            processData: false,
-                            success: function (response) {
-                                // Handle the success response
-                                console.log('File uploaded and classified:', response.classification);
-                                $('#text').text(response.classification);
-                            },
-                            error: function (error) {
-                                // Handle the error response
-                                console.error('Error uploading file:', error);
-                            }
-                        });
-                    } else {
-                        alert('Please select a file before submitting.');
-                    }
-                });
-            }
+            //             $.ajax({
+            //                 type: 'POST',
+            //                 url: '/classify', // Change this to your actual endpoint
+            //                 data: formData,
+            //                 contentType: false,
+            //                 processData: false,
+            //                 success: function (response) {
+            //                     // Handle the success response
+            //                     console.log('File uploaded and classified:', response.classification);
+            //                     $('#text').text(response.classification);
+            //                 },
+            //                 error: function (error) {
+            //                     // Handle the error response
+            //                     console.error('Error uploading file:', error);
+            //                 }
+            //             });
+            //         } else {
+            //             alert('Please select a file before submitting.');
+            //         }
+            //     });
+            // }
 
         
 
@@ -238,7 +240,7 @@
             });
 
             $('#appointment').click(function(event){
-                toggleChatbox(event)
+                // toggleChatbox(event)
                 if(responseCount>5){
                     $.ajax({
                         url: '/summarize',
@@ -271,6 +273,7 @@
                 previewImage(this);
             });
             
+
             $('#send-button').click(function (event) {
                 event.preventDefault(); 
                 var csrftoken = Cookies.get('csrftoken');
@@ -281,6 +284,7 @@
 
                 var prompt = $('#user-input').val().trim();
 
+                
                 if (prompt.trim() !== "") {
                     // \n to break
                     var formattedPrompt = prompt.replace(/\n/g, '<br>');
@@ -296,6 +300,12 @@
                     var promptHeight = $('#prompt')
                     promptHeight.scrollTop(promptHeight.prop("scrollHeight"));
 
+                    setTimeout(function () {
+                        $('#prompt').append('<div id="chat-wait" class="mb-2"><p class="bg-gray-200 text-sm text-gray-700 rounded-lg py-2 px-4 inline-block">...</p></div>');                    
+                    }, 600);
+                    // Scroll kebawah chat area
+                    var promptHeight = $('#prompt')
+                    promptHeight.scrollTop(promptHeight.prop("scrollHeight"));
                     // Bot Response
                     $.ajax({
                         url: '/',
@@ -306,22 +316,81 @@
                             // \n to break
                             var formattedResponse = data.response.replace(/\n/g, '<br>');
 
+                            $('#chat-wait').remove();
                             // bubble chat bot
                             $('#prompt').append('<div class="mb-2"><p class="bg-gray-200 text-sm text-gray-700 rounded-lg py-2 px-4 inline-block">' + formattedResponse + '</p></div>');
 
                             // Scroll kebawah chat area
                             var promptHeight = $('#prompt')
                             promptHeight.scrollTop(promptHeight.prop("scrollHeight"));
+                        },
+                        error: function () {
+                            // Remove the chat-wait element
+                            $('#chat-wait').remove();
+
+                            $('#prompt').append('<div class="mb-2"><p class="bg-gray-200 text-sm text-gray-700 rounded-lg py-2 px-4 inline-block">Error: Terlalu banyak request dalam satu waktu.</p></div>');
+
+                            // Scroll kebawah chat area
+                            promptHeight.scrollTop(promptHeight.prop("scrollHeight"));
                         }
                     });
                 }
             });
+
+            function classifyClick() {
+                $('#button-classify').click(function (event) {
+                    console.log('clicked')
+                    event.preventDefault();
+                    var fileInput = $('#gambar')[0];
+                    var file = fileInput.files[0];
+
+                    if (file) {
+                        console.log('masuk file');
+                        // Create a FormData object to send the file data
+                        var formData = new FormData();
+                        formData.append('gambar', file);
+                        formData.append('clicked', clicked);
+
+                        $('#container-upload').toggleClass('hidden');
+                        $('#waiting').toggleClass('hidden');
+
+                        $.ajax({
+                            type: 'POST',
+                            url: '/classify', // Change this to your actual endpoint
+                            data: formData,
+                            contentType: false,
+                            processData: false,
+                            success: function (response) {
+                                // Handle the success response
+                                console.log('File uploaded and classified:', response.classification);
+
+                                console.log(response.classifiedImageUrl)
+                                $('#text').text(response.classification);
+
+                                // Display the classified image
+                                $('#classified-image').attr('src', response.classifiedImageUrl);
+                                $('#classified-image-container').removeClass('hidden');
+                            },
+                            error: function (error) {
+                                // Handle the error response
+                                console.error('Error uploading file:', error);
+                            },
+                        });
+                    } else {
+                        alert('Please select a file before submitting.');
+                    }
+                });
+            }
+
         });
     </script>
 </head>
 <body>
     <div class="flex flex-wrap h-screen items-center">
         <div class="md:w-1/2 w-full mx-auto p-8 lg:px-32 lg:py-16">
+            <div id="error" class="hidden p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400" role="alert">
+                <span class="font-medium">Error!</span> Masukkan input
+            </div>
             <form id="userForm">
                 <div class="mb-6">
                     <label for="name" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Nama</label>
@@ -430,9 +499,14 @@
                 </div>
                 <button class="p-2 bg-main text-white font-semibold w-2/3 rounded-lg mb-5" id="button-classify">Submit</button>
             </div>
-            <div id="waiting" class="hidden">
-                <div class="flex flex-wrap mt-32 px-4 justify-center">
-                    <p id="text" class="font-semibold">Menunggu Klasifikasi</p>
+            <div id="waiting" class="hidden h-full">
+                <div class="flex flex-wrap items-center px-4 justify-center h-full">
+                    <div>
+                        <div id="classified-image-container" class="w-full hidden mb-2">
+                            <img id="classified-image" src="" alt="Classified Image" class="w-2/3 mx-auto h-auto rounded-lg">
+                        </div>
+                        <p id="text" class="text-lg font-semibold w-full">Menunggu Klasifikasi</p>
+                    </div>
                 </div>
             </div>
         </div>

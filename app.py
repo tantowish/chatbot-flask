@@ -7,7 +7,7 @@ from sqlalchemy import Enum
 app = Flask(__name__, template_folder='template', static_folder='static') 
 app.debug = True
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://digman-dev:ROgoRDIX#/Z./t`U@34.101.103.116/chatbot_db'
 app.config['UPLOAD_FOLDER'] = 'static/img'
 db = SQLAlchemy(app)
 
@@ -18,13 +18,14 @@ class chatbot_history(db.Model):
     jenis_kelamin = db.Column(Enum('P', 'L', name='jenis_kelamin_enum'), nullable=False)
     rangkuman = db.Column(db.Text, nullable=True)
     classification = db.Column(db.String(100), nullable=True)
+    image = db.Column(db.String(100), nullable=True)
 
 # Buat database dan tabel
 with app.app_context():
     db.create_all()  
 
 # OpenAI API Key 
-openai.api_key = 'sk-API-Key'
+openai.api_key = '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'
 app.secret_key = '123'
 
 def get_completion(prompt):
@@ -66,6 +67,7 @@ def index():
 def summarize_route():
     messages = session.get('messages', [])
     classification = session.get('classification')
+    image = session.get('image')
     if(classification):
         classification = session['classification']
     else:
@@ -92,7 +94,8 @@ def summarize_route():
         "umur": umur,  
         "jenis_kelamin": jenis_kelamin, 
         "rangkuman": session['summary'],
-        "classification":classification
+        "classification":classification,
+        "image":image
     }
 
     new_user = chatbot_history(**history)
@@ -121,6 +124,7 @@ def intro_route():
 @app.route("/classify", methods=['POST'])
 def classify_route():
     classification = session.get('classification')
+    image = session.get('image')
     if 'gambar' in request.files:
         file = request.files['gambar']
         path = request.form.get('clicked', None)
@@ -137,11 +141,14 @@ def classify_route():
             file.save(file_path)
 
             classification = model.classify(path, file_path)
+            image = file.filename
 
             # Perform classification or any other processing here
             session['classification'] = classification
+            session['image'] = image
 
-            return jsonify({'classification': classification})
+            return jsonify({'classification': classification, 'classifiedImageUrl': file_path})
+
     
     return 'No file uploaded or invalid file.'
 
