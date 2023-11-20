@@ -1,81 +1,139 @@
-<!-- query.html -->
-<html> 
-<head> 
-	<title>ChatBOT</title> 
-	<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> 
+    <link href="{{ url_for('static', filename='/asset/dist/output.css') }}" rel="stylesheet">
 	<script src="https://cdn.jsdelivr.net/npm/js-cookie@3.0.0/dist/js.cookie.min.js"></script> 
-	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js" integrity="sha384-w76AqPfDkMBDXo30jS1Sgez6pr3x5MlQ1ZAGC+nuZB+EYdgRZgiwxhTBTkF7CXvN" crossorigin="anonymous"></script> 
-	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-GLhlTQ8iRABdZLl6O3oVMWSktQOp6b7In1Zl3/Jr59b6EGGoI1aFkw7cmDA6j6gD" crossorigin="anonymous"> 
-	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.2/font/bootstrap-icons.css" integrity="sha384-b6lVK+yci+bfDmaY1u0zE8YYJt0TZxLEAFyYSLHId4xoVvsrQu3INevFKo+Xir8e" crossorigin="anonymous"> 
-	<script> 
-		$(document).ready(function() { 
-			$('#prompt').keypress(function(event) { 
-				if (event.keyCode === 13 && !event.shiftKey) { 
-					event.preventDefault(); 
-					$('form').submit(); 
-				} 
-			}); 
-			$('form').on('submit', function(event) { 
-				event.preventDefault(); 
-				var csrftoken = Cookies.get('csrftoken'); 
-				
-				$.ajaxSetup({ 
-					headers: { 'X-CSRFToken': csrftoken } 
-				}); 
-				// Get the prompt
-				var prompt = $('#prompt').val();
+    <script src="{{ url_for('static', filename='/asset/javascript/index.js') }}"></script>
+</head>
+<body>
+    <div class="flex flex-wrap h-screen items-center">
+        <div class="md:w-1/2 w-full mx-auto p-8 lg:px-32 lg:py-16">
+            <div id="error" class="hidden p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400" role="alert">
+                <span class="font-medium">Error!</span> Masukkan input
+            </div>
+            <form id="userForm">
+                <div class="mb-6">
+                    <label for="name" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Nama</label>
+                    <input type="text" id="name" name="name" class="bg-gray-50 border border-main text-gray-900 text-sm rounded-lg block w-full p-2.5" required>
+                </div>
+                <div class="mb-6">
+                    <label for="umur" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Umur</label>
+                    <input type="number" id="umur" name="umur" class="bg-gray-50 border border-main text-gray-900 text-sm rounded-lg block w-full p-2.5" required>
+                </div>
+                <div class="mb-10">
+                    <label for="kelamin" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Jenis Kelamin</label>
+                    <select id="kelamin" name="kelamin" class="bg-gray-50 border border-main text-gray-900 text-sm rounded-lg block w-full p-2.5">
+                        <option value="pilih">pilih</option>
+                        <option value="L">laki-laki</option>
+                        <option value="P">perempuan</option>
+                    </select>
+                </div>
+                <div class="flex flex-wrap items-center justify-center">
+                    <div class="mb-4 mr-4 flex flex-col items-center gap-2">
+                        <button type="button" id="open-chat" class="bg-main text-white py-2 px-4 rounded-md hover:bg-teal-400 transition duration-300 flex items-center">
+                            Konsultasi Kecerdasan Buatan
+                        </button>
+                        <p class="text-center">atau</p>
+                        <button type="submit" id="appointment" class="bg-main text-white py-2 px-4 rounded-md hover:bg-teal-400 transition duration-300 flex items-center">lanjutkan appointment</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="w-full md:w-1/2 md:h-screen bg-main flex flex-wrap items-center">
+            <div id="ic3D" class="p-8 max-w-lg mx-auto transition hover:translate-x-2 hover:scale-105 ease-in-out">
+                <img src="{{ url_for('static', filename='/asset/img/3d_teeth.png') }}" alt="">
+            </div>
+            <div id="chat-container" class="hidden px-4 md:px-0 w-96 mx-auto transition hover:scale-105 group">
+                <div id="chat-bg" class="bg-white shadow-2xl rounded-lg max-w-lg w-full">
+                    <div class="p-4 border-b bg-main text-white rounded-t-lg flex justify-between items-center">
+                        <p class="text-lg font-semibold" id="header">Carigi Bot</p>
+                        <div class="flex flex-wrap items-center">
+                            <button id="tm-menu" class="mr-5">
+                                <svg id="icTM" class="" viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="css-i6dzq1"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                                <svg id="icChat" class="hidden" viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="css-i6dzq1"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div id="chat" class="">
+                        <div id="prompt" class="p-4 h-80 overflow-y-auto">
+                            <div class="mb-2">
+                                <p class="bg-gray-200 text-gray-700 text-sm rounded-lg py-2 px-4 inline-block">{{ introduction }}.</p>
+                            </div>
+                        </div>
+                        <form action="" method="post" class="p-4 border-t flex flex-nowrap mx-auto">
+                            <input id="user-input" type="text" placeholder="Type a message" class="w-3/4 px-3 py-2 border rounded-l-md focus:outline-none focus:ring-2 focus:ring-main group-focus:scale-105" name="prompt" autocomplete="off">
+                            <button id="send-button" type="submit" class="w-1/5 bg-main text-white py-2 rounded-r-md hover:bg-teal-400 transition duration-300">Send</button>
+                        </form>  
+                    </div>    
+                    <div id="tm" class="hidden">
+                        <div class="p-4 h-[395px] overflow-y-auto text-center">
+                            <h1 class="mb-8 mt-4">Pilih sesuai foto atau gambar</h1>
+                            <button id="gigi" class="p-2 bg-main text-white font-semibold w-2/3 rounded-lg mb-8">
+                                Gigi
+                            </button>
+                            <button id="gusi" class="p-2 bg-main text-white font-semibold w-2/3 rounded-lg mb-8">
+                                Gusi
+                            </button>
+                            <button id="jll" class="p-2 bg-main text-white font-semibold w-2/3 rounded-lg mb-8">
+                                Jaringan Lunak Lainnya
+                            </button>
+                        </div>
+                    </div>                 
+                </div>
+            </div>
+        </div>
+    </div>
 
-				// Replace \n with HTML line breaks in the prompt
-				var formattedPrompt = prompt.replace(/\n/g, '<br>');
-
-				var dateTime = new Date();
-				var time = dateTime.toLocaleTimeString();
-
-				// User response
-				$('#response').append('<p id="GFG1">('+ time + ') <i class="bi bi-person"></i>: ' + formattedPrompt + '</p>');
-				$('#response #GFG1').css({"color": "green", "width": "90%", "float": "left"});
-				// Clear the prompt 
-				$('#prompt').val(''); 
-				// Bot Response
-				$.ajax({ 
-					url: '/', 
-					type: 'POST', 
-					data: {prompt: prompt}, 
-					dataType: 'json', 
-					success: function(data) {
-						// Replace \n with HTML line breaks
-						var formattedResponse = data.response.replace(/\n/g, '<br>');
-
-						$('#response').append('<p id="GFG2">('+ time + ') <i class="bi bi-robot"></i>: ' + formattedResponse + '</p>');
-						$('#response #GFG2').css({"color": "red", "width": "90%", "float": "left"});
-					}
-				}); 
-			}); 
-		}); 
-	</script> 
-</head> 
-<body> 
-	<div class="container p-3"> 
-		<h3>Carigi Chatbot</h3> 
-		<div class="mb-3"> 
-			<form method="post" action=""> 
-				<label for="prompt" class="form-label"><strong>Prompt: </strong></label> 
-				<textarea class="form-control" type="textarea" id="prompt" name="prompt" rows="3"></textarea> 
-				<br> 
-				<button class="btn btn-primary " type="submit">Submit</button> 
-			</form> 
-		</div> 
-		<br> 
-		<div class="mb-3"> 
-			<h6>Response:</h6> 
-			<div class="container border overflow-auto h-50" id="response">
-				<p id="GFG2" style="color:red;width:90%;float:left">({{ time }}) <i class="bi bi-robot"></i>{{ introduction }}</p>
-			</div> 
-			
-		</div> 
-	</div> 
-</body> 
-</html> 
-
-
-
+    <template id="template-tampak">
+        <div id="tampak" class="p-4 h-[395px] overflow-y-auto text-center">
+            <h1 class="mb-4 mt-4 font-semibold">Pilih Tampak Foto</h1>
+            <button id="tampakDepan" class="p-2 bg-main text-white font-semibold w-2/3 rounded-lg mb-5">
+                Tampak Depan
+            </button>
+            <button id="tampakSamping" class="p-2 bg-main text-white font-semibold w-2/3 rounded-lg mb-5">
+                Tampak Samping
+            </button>
+            <button id="tampakDalam" class="p-2 bg-main text-white font-semibold w-2/3 rounded-lg mb-5">
+                Tampak Dalam
+            </button>
+            <button id="TampakAtas" class="p-2 bg-main text-white font-semibold w-2/3 rounded-lg mb-5">
+                Tampak Atas
+            </button>
+        </div>
+    </template>
+    
+    <template id="upload">
+        <div id="upload-container" class="p-4 h-[395px] overflow-y-auto text-center">
+            <div id="container-upload">
+                <h1 class="mb-8 mt-4 font-semibold">Upload Gambar</h1>
+                <div class="mb-8">
+                    <label class="cursor-pointer px-16 py-4 text-black border border-main border-dashed" htmlFor="gambar">
+                        <input class="hidden" type="file" name="gambar" id="gambar" accept="image/*" onchange="previewImage(this)">
+                        Pick photo
+                    </label>
+                    <div class="flex flex-col items-center justify-center h-36">
+                        <div id="image-preview" class="mt-8 hidden">
+                            <img id="preview" src="" alt="Image Preview" class="w-1/2 mx-auto h-auto rounded-lg">
+                        </div>
+                    </div>
+                </div>
+                <button class="p-2 bg-main text-white font-semibold w-2/3 rounded-lg mb-5" id="button-classify">Submit</button>
+            </div>
+            <div id="waiting" class="hidden h-full">
+                <div class="flex flex-wrap items-center px-4 justify-center h-full">
+                    <div>
+                        <div id="classified-image-container" class="w-full hidden mb-2">
+                            <img id="classified-image" src="" alt="Classified Image" class="w-2/3 mx-auto h-auto rounded-lg">
+                        </div>
+                        <p id="text" class="text-lg font-semibold w-full">Menunggu Klasifikasi</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+</body>
+</html>
