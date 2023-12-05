@@ -7,7 +7,7 @@ from sqlalchemy import Enum
 app = Flask(__name__, template_folder='template', static_folder='static') 
 app.debug = True
 
-app.config['SQLALCHEMY_DATABASE_URI'] = ''
+app.config['SQLALCHEMY_DATABASE_URI'] = 'database'
 app.config['UPLOAD_FOLDER'] = 'static/img'
 db = SQLAlchemy(app)
 
@@ -25,7 +25,7 @@ with app.app_context():
     db.create_all()  
 
 # OpenAI API Key 
-openai.api_key = ''
+openai.api_key = 'API-KEY'
 app.secret_key = '@123'
 
 def get_completion(prompt):
