@@ -64,7 +64,6 @@ $(document).ready(function(event) {
 
     const gigiButton = $("#gigi");
     const tmTemplate = $("#tm");
-    const gigiTemplate = $("#template-tampak");
 
     let clicked
     gigiButton.click(function (event) {
